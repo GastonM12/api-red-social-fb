@@ -104,39 +104,47 @@ const remove = (req, res) => {
 
 //Listar publicaciones de un usuario
 const user = async (req, res) => {
-   //sacar el id de usuario
-   let userId = req.params.id;
-   //controlar la pagina
-   let page = 1;
+   try {
+      //sacar el id de usuario
+      let userId = req.params.id;
+      //controlar la pagina
+      // Comprobar si se pasa un id por parámetros
+      if (req.params.id) userId = req.params.id;
 
-   if (req.params.page) page = req.params.page;
+      //comprobar si me llegael id por parametro en la url
 
-   let itemsPerPage = 1;
+      let page = parseInt(req.params.page) || 1;
 
-   //find, populate , ordenar, paginar
+      if (req.params.page) page = req.params.page;
 
-   let result = await Publication.find({ user: userId })
-      .sort("-create_at")
-      .populate("user", "-password -__v -role -email")
-      .paginate(page, itemsPerPage);
+      let itemsPerPage = 5;
 
-   if (!result) {
-      return res.status(404).send({
-         status: "error",
-         message: "No se han encontrado publica.",
+      //find, populate , ordenar, paginar
+
+      let resulta = Publication.find({ user: userId });
+
+      let result = await resulta
+         .populate("user", "-password -__v -role -email")
+         .sort("create_at")
+         .paginate(page, itemsPerPage);
+
+      if (!result) {
+         return res.status(404).send({
+            status: "error",
+            message: "No se han encontrado publica.",
+         });
+      }
+      const total = await Publication.countDocuments({ user: userId });
+      const totalPages = await Math.ceil(total / itemsPerPage);
+
+      return res.status(200).send({
+         status: "success",
+         message: "ruta user ",
+         publications: result,
+         total,
+         totalPages,
       });
-   }
-
-   const total = await Publication.countDocuments({ user: userId });
-   const totalPages = await Math.ceil(total / itemsPerPage);
-
-   return res.status(200).send({
-      status: "success",
-      message: "ruta user ",
-      publications: result,
-      total,
-      totalPages,
-   });
+   } catch {}
 };
 
 //subir fichero
@@ -237,10 +245,9 @@ const feed = async (req, res) => {
       const publications = await Publication.find({
          user: myFollows.following,
       })
-         .populate("user" ,"-password -role -__v -email")
+         .populate("user", "-password -role -__v -email")
          .sort("-create_at")
          .paginate(page, itemsPerPage);
-
 
       return res.status(200).send({
          statuss: "success",
@@ -249,7 +256,7 @@ const feed = async (req, res) => {
          publications,
          total: publications.length,
          page,
-         pages:Math.ceil(publications.length/itemsPerPage)
+         pages: Math.ceil(publications.length / itemsPerPage),
       });
    } catch (error) {
       //find a publicaciones in

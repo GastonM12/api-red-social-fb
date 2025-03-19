@@ -39,6 +39,7 @@ const save = (req, res) => {
                message: "No se ah podido seguir al usuario ",
             });
          }
+
          return res.status(200).send({
             status: "Success",
             identity: req.user,
@@ -124,6 +125,7 @@ const following = async (req, res) => {
       const total = await Follow.countDocuments({ user: userId });
       const totalPages = Math.ceil(total / itemsPage);
 
+
       return res.status(200).send({
          status: "success",
          user: req.user,
@@ -160,7 +162,7 @@ const followers = async (req, res) => {
 
       // Usar .paginate() con await para que funcione de forma asincrónica
       const follows = await Follow.find({ followed: userId })
-         .populate("followed", "-password -role -__v -email")
+         .populate("user followed", "-password -role -__v -email")
          .paginate(page, itemsPage);
 
       // Verificar si no hay seguidores
@@ -175,10 +177,12 @@ const followers = async (req, res) => {
       const total = await Follow.countDocuments({ user: userId });
       const totalPages = Math.ceil(total / itemsPage);
 
+   
+
       return res.status(200).send({
          status: "success",
          user: req.user,
-         message:"Listado de usuarios que me siguen",
+         message: "Listado de usuarios que me siguen",
          follows,
          total,
          pages: totalPages,
